@@ -6,7 +6,7 @@ class User {
   static async findByUsername(username) {
     console.log('Finding user with username:', username);
     const [rows] = await pool.execute(
-      'SELECT id, username, userpassword, firstname, lastname, email, api_access FROM users WHERE username = ?',
+      'SELECT id, username, userpassword, firstname, lastname, email FROM users WHERE username = ?',
       [username]
     );
     const user = rows[0];
@@ -24,7 +24,7 @@ class User {
   // Find user by ID
   static async findById(id) {
     const [rows] = await pool.execute(
-      'SELECT id, username, firstname, lastname, email, api_access FROM users WHERE id = ?',
+      'SELECT id, username, firstname, lastname, email FROM users WHERE id = ?',
       [id]
     );
     return rows[0];
@@ -32,23 +32,22 @@ class User {
 
   // Create a new user
   static async create(userData) {
-    const { firstname, lastname, username, password, api_access = 'no' } = userData;
+    const { firstname, lastname, username, password } = userData;
     
     // Hash the password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     
     const [result] = await pool.execute(
-      'INSERT INTO users (firstname, lastname, username, userpassword, api_access) VALUES (?, ?, ?, ?, ?)',
-      [firstname, lastname, username, hashedPassword, api_access]
+      'INSERT INTO users (firstname, lastname, username, userpassword) VALUES (?, ?, ?, ?)',
+      [firstname, lastname, username, hashedPassword]
     );
     
     return {
       id: result.insertId,
       firstname,
       lastname,
-      username,
-      api_access
+      username
     };
   }
 
@@ -85,16 +84,6 @@ class User {
       console.error('Error details:', error);
       return false;
     }
-  }
-  
-  // Update user's API access
-  static async updateApiAccess(userId, access) {
-    await pool.execute(
-      'UPDATE users SET api_access = ? WHERE id = ?',
-      [access, userId]
-    );
-    
-    return { success: true };
   }
 }
 

@@ -28,13 +28,7 @@ const schemas = {
     firstname: Joi.string().min(1).max(250).required(),
     lastname: Joi.string().min(1).max(250).required(),
     username: Joi.string().min(3).max(200).required(),
-    password: Joi.string().min(6).required(),
-    api_access: Joi.string().valid('yes', 'no').default('no')
-  }),
-  
-  updateApiAccess: Joi.object({
-    userId: Joi.number().integer().required(),
-    access: Joi.string().valid('yes', 'no').required()
+    password: Joi.string().min(6).required()
   }),
   
   // Case search schema

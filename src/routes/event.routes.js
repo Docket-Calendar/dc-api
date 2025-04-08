@@ -1,6 +1,6 @@
 const express = require('express');
 const { getAllEvents, getEventById, getEventsByCaseId, searchEvents } = require('../controllers/event.controller');
-const { authenticate } = require('../middleware/auth.middleware');
+const { validateToken } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
@@ -31,7 +31,7 @@ const router = express.Router();
  *       401:
  *         description: Unauthorized
  */
-router.get('/', authenticate, getAllEvents);
+router.get('/', validateToken, getAllEvents);
 
 /**
  * @swagger
@@ -97,7 +97,7 @@ router.get('/', authenticate, getAllEvents);
  *       401:
  *         description: Unauthorized
  */
-router.get('/search', authenticate, searchEvents);
+router.get('/search', validateToken, searchEvents);
 
 /**
  * @swagger
@@ -122,7 +122,7 @@ router.get('/search', authenticate, searchEvents);
  *       401:
  *         description: Unauthorized
  */
-router.get('/:id', authenticate, getEventById);
+router.get('/:id', validateToken, getEventById);
 
 /**
  * @swagger
@@ -157,6 +157,6 @@ router.get('/:id', authenticate, getEventById);
  *       401:
  *         description: Unauthorized
  */
-router.get('/case/:caseId', authenticate, getEventsByCaseId);
+router.get('/case/:caseId', validateToken, getEventsByCaseId);
 
 module.exports = router; 

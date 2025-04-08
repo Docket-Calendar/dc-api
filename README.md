@@ -166,9 +166,7 @@ API_PREFIX=/api/v1
 ## API Endpoints
 
 ### Authentication
-- `POST /api/v1/auth/register` - Register a new user
-- `POST /api/v1/auth/login` - Login user
-- `GET /api/v1/auth/me` - Get current user
+- `GET /api/v1/auth/validate-token` - Validate API token
 
 ### Cases
 - `GET /api/v1/cases` - Get all cases (paginated)
@@ -183,13 +181,40 @@ API_PREFIX=/api/v1
 
 ## Authentication
 
-The API uses JWT (JSON Web Tokens) for authentication. To access protected endpoints:
+The API uses JWT (JSON Web Tokens) for authentication. This API is designed to work with your existing DocketCalendar application where users are already authenticated.
 
-1. Register or login to get a JWT token
-2. Include the token in the Authorization header of your requests:
+### How to Use API Tokens:
+
+1. Generate an API token in your DocketCalendar admin interface
+   - Note: Implementation of the token generation page in your main application is required
+   - You can use the utility function in `src/utils/token.js` to generate tokens
+
+2. Include the token in the Authorization header of your API requests:
    ```
    Authorization: Bearer <your-token>
    ```
+
+3. You can verify if your token is valid using the `/api/v1/auth/validate-token` endpoint
+
+### Token Format
+
+Tokens contain a payload with:
+- A unique identifier (you can use user IDs or custom identifiers)
+- Token expiration time (default: 1 day, configurable in `.env`)
+
+### Sample Token Generation Code for Your Admin Interface
+
+```javascript
+const { generateToken } = require('./path/to/token.js');
+
+// Generate a token with custom payload
+const token = generateToken({ 
+  id: 'user-123',  // Can be any identifier you want to use
+  name: 'John Doe' // Optional additional data
+});
+
+// Return this token to the user
+```
 
 ## Documentation
 

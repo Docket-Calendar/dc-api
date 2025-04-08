@@ -1,6 +1,6 @@
 const express = require('express');
 const { getAllCases, getCaseById, searchCases } = require('../controllers/case.controller');
-const { authenticate } = require('../middleware/auth.middleware');
+const { validateToken } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
@@ -31,7 +31,7 @@ const router = express.Router();
  *       401:
  *         description: Unauthorized
  */
-router.get('/', authenticate, getAllCases);
+router.get('/', validateToken, getAllCases);
 
 /**
  * @swagger
@@ -80,7 +80,7 @@ router.get('/', authenticate, getAllCases);
  *       401:
  *         description: Unauthorized
  */
-router.get('/search', authenticate, searchCases);
+router.get('/search', validateToken, searchCases);
 
 /**
  * @swagger
@@ -105,6 +105,6 @@ router.get('/search', authenticate, searchCases);
  *       401:
  *         description: Unauthorized
  */
-router.get('/:id', authenticate, getCaseById);
+router.get('/:id', validateToken, getCaseById);
 
 module.exports = router; 
