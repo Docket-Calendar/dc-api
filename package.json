@@ -4,7 +4,7 @@
   "description": "REST API for DocketCalendar application",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
+    "start": "bash startup.sh",
     "dev": "nodemon src/index.js",
     "test": "jest --detectOpenHandles --forceExit"
   },
@@ -29,5 +29,8 @@
     "jest": "^29.7.0",
     "nodemon": "^3.1.9",
     "supertest": "^7.1.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }
