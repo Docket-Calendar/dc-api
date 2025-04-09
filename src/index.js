@@ -13,8 +13,14 @@ const { notFound, errorHandler } = require('./middleware/error.middleware');
 // Initialize express app
 const app = express();
 
-// Test database connection
-testConnection();
+// Test database connection in the background, don't block startup
+(async () => {
+  try {
+    await testConnection();
+  } catch (error) {
+    console.error('Error testing database connection:', error.message);
+  }
+})();
 
 // Middleware
 app.use(helmet()); // Security headers
