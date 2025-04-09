@@ -4,166 +4,43 @@ A RESTful API for the DocketCalendar application that provides case information 
 
 ## Table of Contents
 
-- [Features](#features)
-- [Project Structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Getting Started](#getting-started)
-- [Environment Variables](#environment-variables)
-- [API Endpoints](#api-endpoints)
+- [Overview](#overview)
 - [Authentication](#authentication)
-- [Documentation](#documentation)
-- [Testing](#testing)
-- [Deployment](#deployment)
+- [API Endpoints](#api-endpoints)
+- [Examples](#examples)
+- [Rate Limits](#rate-limits)
+- [Error Handling](#error-handling)
+- [Support](#support)
 
-## Features
+## Overview
 
-- RESTful API built with Node.js and Express
-- MySQL database connection (Azure)
-- JWT authentication
-- Pagination
-- Search functionality
-- API documentation with Swagger/OpenAPI
-- Error handling
-- Rate limiting
-- Security headers with Helmet
-- CORS support
+The DocketCalendar API provides access to case information and calendar events. This API allows you to:
 
-## Project Structure
+- Retrieve case information
+- Access case-related events
+- Search for cases and events using various parameters
+- Validate authentication tokens
 
-```
-docket-calendar-api/
-├── node_modules/
-├── src/
-│   ├── config/
-│   │   ├── database.js
-│   │   └── server.js
-│   ├── controllers/
-│   │   ├── auth.controller.js
-│   │   ├── case.controller.js
-│   │   └── event.controller.js
-│   ├── middleware/
-│   │   ├── auth.middleware.js
-│   │   ├── error.middleware.js
-│   │   └── validation.middleware.js
-│   ├── models/
-│   │   ├── case.model.js
-│   │   ├── event.model.js
-│   │   └── user.model.js
-│   ├── routes/
-│   │   ├── auth.routes.js
-│   │   ├── case.routes.js
-│   │   ├── event.routes.js
-│   │   └── index.js
-│   ├── utils/
-│   │   └── swagger.js
-│   └── index.js
-├── .env
-├── .gitignore
-├── package.json
-└── README.md
-```
+## Authentication
 
-## Prerequisites
+The API uses JWT (JSON Web Tokens) for authentication.
 
-- Node.js (v14 or higher)
-- MySQL database (Azure)
-- npm or yarn
+### How to Use API Tokens:
 
-## Getting Started
-
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd docket-calendar-api
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Set up environment variables (see Environment Variables section)
-
-4. Create the database tables:
-   You'll need to create the following tables in your MySQL database:
-
-   - `users` table:
-     ```sql
-     CREATE TABLE users (
-       id INT PRIMARY KEY AUTO_INCREMENT,
-       name VARCHAR(100) NOT NULL,
-       email VARCHAR(100) UNIQUE NOT NULL,
-       password VARCHAR(100) NOT NULL,
-       role ENUM('user', 'admin') DEFAULT 'user',
-       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-     );
-     ```
-
-   - `cases` table:
-     ```sql
-     CREATE TABLE cases (
-       id INT PRIMARY KEY AUTO_INCREMENT,
-       case_name VARCHAR(255) NOT NULL,
-       jurisdiction VARCHAR(100),
-       case_assignees TEXT,
-       timezone VARCHAR(50),
-       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-     );
-     ```
-
-   - `events` table:
-     ```sql
-     CREATE TABLE events (
-       id INT PRIMARY KEY AUTO_INCREMENT,
-       casename VARCHAR(255) NOT NULL,
-       trigger_name VARCHAR(255),
-       event_name VARCHAR(255) NOT NULL,
-       event_date DATE,
-       event_type VARCHAR(100),
-       trigger_date DATE,
-       trigger_time TIME,
-       service_type VARCHAR(100),
-       jurisdiction VARCHAR(100),
-       created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-     );
-     ```
-
-5. Run the application:
-   ```bash
-   # Development mode
-   npm run dev
+1. Obtain an API token from the DocketCalendar admin interface
    
-   # Production mode
-   npm start
+2. Include the token in the Authorization header of your API requests:
+   ```
+   Authorization: Bearer <your-token>
    ```
 
-## Environment Variables
+3. You can verify if your token is valid using the `/api/v1/auth/validate-token` endpoint
 
-Create a `.env` file in the root directory with the following variables (see `.env.example` for a template):
+### Token Format
 
-```
-# Server Configuration
-PORT=3000
-NODE_ENV=development
-
-# Database Configuration
-DB_HOST=your_database_host
-DB_PORT=3306
-DB_USER=your_username
-DB_PASSWORD=your_password
-DB_NAME=your_database_name
-
-# Authentication
-JWT_SECRET=your-strong-jwt-secret-key-should-be-changed-in-production
-JWT_EXPIRATION=1d
-
-# API Configuration
-API_PREFIX=/api/v1
-```
-
-Note: Never commit your actual `.env` file to version control.
+Tokens contain a payload with:
+- A unique identifier 
+- Token expiration time (default: 1 day)
 
 ## API Endpoints
 
@@ -181,95 +58,67 @@ Note: Never commit your actual `.env` file to version control.
 - `GET /api/v1/events/case/:caseId` - Get all events for a specific case
 - `GET /api/v1/events/search` - Search events by various parameters
 
-## Authentication
+## Examples
 
-The API uses JWT (JSON Web Tokens) for authentication. This API is designed to work with your existing DocketCalendar application where users are already authenticated.
+### Retrieving Cases
 
-### How to Use API Tokens:
+```
+GET /api/v1/cases?page=1&limit=10
+Authorization: Bearer <your-token>
+```
 
-1. Generate an API token in your DocketCalendar admin interface
-   - Note: Implementation of the token generation page in your main application is required
-   - You can use the utility function in `src/utils/token.js` to generate tokens
+### Searching for Events
 
-2. Include the token in the Authorization header of your API requests:
-   ```
-   Authorization: Bearer <your-token>
-   ```
+```
+GET /api/v1/events/search?event_type=hearing&start_date=2023-01-01
+Authorization: Bearer <your-token>
+```
 
-3. You can verify if your token is valid using the `/api/v1/auth/validate-token` endpoint
+### Retrieving a Specific Case
 
-### Token Format
+```
+GET /api/v1/cases/123
+Authorization: Bearer <your-token>
+```
 
-Tokens contain a payload with:
-- A unique identifier (you can use user IDs or custom identifiers)
-- Token expiration time (default: 1 day, configurable in `.env`)
+## Rate Limits
 
-### Sample Token Generation Code for Your Admin Interface
+To ensure service stability and fair usage, the API implements rate limiting:
 
-```javascript
-const { generateToken } = require('./path/to/token.js');
+- 100 requests per minute per IP address
+- 1000 requests per day per token
 
-// Generate a token with custom payload
-const token = generateToken({ 
-  id: 'user-123',  // Can be any identifier you want to use
-  name: 'John Doe' // Optional additional data
-});
+If you exceed these limits, you will receive a 429 (Too Many Requests) response.
 
-// Return this token to the user
+## Error Handling
+
+The API uses standard HTTP status codes:
+
+- 200: Success
+- 400: Bad Request - Invalid parameters
+- 401: Unauthorized - Invalid or missing token
+- 403: Forbidden - Valid token but insufficient permissions
+- 404: Not Found - Resource doesn't exist
+- 429: Too Many Requests - Rate limit exceeded
+- 500: Internal Server Error - Something went wrong on our end
+
+Error responses include a JSON body with details:
+
+```json
+{
+  "error": true,
+  "message": "Description of the error",
+  "status": 400
+}
 ```
 
 ## Documentation
 
-API documentation is available using Swagger UI:
+Interactive API documentation is available at:
 
-- Access Swagger UI at: `http://localhost:3000/api-docs`
-- Swagger JSON at: `http://localhost:3000/api-docs.json`
+- Swagger UI: [https://api.docketcalendar.com/api-docs](https://api.docketcalendar.com/api-docs)
+- Swagger JSON: [https://api.docketcalendar.com/api-docs.json](https://api.docketcalendar.com/api-docs.json)
 
-## Testing
+## Support
 
-The API can be tested using:
-
-### Jest Testing
-Run tests with:
-```bash
-npm test
-```
-
-### Postman
-A Postman collection is available in the `postman` directory for testing the API endpoints.
-
-Import the collection into Postman and update the environment variables as needed.
-
-## Deployment
-
-### Node.js Deployment
-1. Set `NODE_ENV=production` in your .env file
-2. Use a process manager like PM2:
-   ```bash
-   npm install -g pm2
-   pm2 start src/index.js --name docket-calendar-api
-   ```
-
-### Docker Deployment
-1. Create a Dockerfile:
-   ```dockerfile
-   FROM node:16-alpine
-   WORKDIR /app
-   COPY package*.json ./
-   RUN npm ci --only=production
-   COPY . .
-   EXPOSE 3000
-   CMD ["node", "src/index.js"]
-   ```
-
-2. Build and run Docker container:
-   ```bash
-   docker build -t docket-calendar-api .
-   docker run -p 3000:3000 -d docket-calendar-api
-   ```
-
-### Cloud Deployment
-For Azure deployment:
-1. Create an Azure App Service
-2. Use Azure DevOps or GitHub Actions for CI/CD
-3. Configure environment variables in Azure App Service settings 
+For questions or issues with the API, please contact support at [support@docketcalendar.com](mailto:support@docketcalendar.com). 
