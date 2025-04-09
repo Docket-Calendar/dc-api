@@ -1,37 +1,35 @@
-version: '3.8'
+version: '3'
 
 services:
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     ports:
       - "3000:3000"
     volumes:
-      - .:/app
+      - ./:/app
       - /app/node_modules
-    env_file:
-      - .env
-    environment:
-      - NODE_ENV=development
     depends_on:
-      - mysql
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_USER=${MYSQL_USER:-docket_user}
+      - DB_PASSWORD=${MYSQL_PASSWORD:-password}
+      - DB_NAME=${MYSQL_DATABASE:-docket_calendar}
+      - NODE_ENV=development
     restart: unless-stopped
-    command: npm run dev
 
-  mysql:
+  db:
     image: mysql:8.0
     ports:
       - "3306:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=docket_calendar
-      - MYSQL_USER=docket_user
-      - MYSQL_PASSWORD=docket_password
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-docket_calendar}
+      - MYSQL_USER=${MYSQL_USER:-docket_user}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-password}
     volumes:
-      - mysql-data:/var/lib/mysql
-      - ./database.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - mysql_data:/var/lib/mysql
     restart: unless-stopped
 
 volumes:
-  mysql-data: 
+  mysql_data: 

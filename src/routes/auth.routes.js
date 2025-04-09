@@ -25,6 +25,21 @@ const router = express.Router();
  *                 message:
  *                   type: string
  *                   example: Token is valid
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 1
+ *                     username:
+ *                       type: string
+ *                       example: johndoe
+ *                     firstname:
+ *                       type: string
+ *                       example: John
+ *                     lastname:
+ *                       type: string
+ *                       example: Doe
  *                 tokenData:
  *                   type: object
  *                   properties:
@@ -44,6 +59,7 @@ router.get('/validate-token', validateToken, (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Token is valid',
+    user: req.user,
     tokenData: {
       ...req.tokenData,
       // Remove sensitive information if any

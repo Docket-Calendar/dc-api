@@ -1,6 +1,11 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
-const { apiPrefix } = require('../config/server');
+const { apiPrefix, environment } = require('../config/server');
+
+// Determine server URL based on environment
+const serverUrl = environment === 'production' 
+  ? 'https://api.docketcalendar.com/api/v1'
+  : apiPrefix;
 
 // Swagger definition
 const swaggerOptions = {
@@ -17,8 +22,8 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: apiPrefix,
-        description: 'API Server'
+        url: serverUrl,
+        description: environment === 'production' ? 'Production Server' : 'Development Server'
       }
     ],
     components: {

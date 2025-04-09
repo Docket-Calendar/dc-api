@@ -47,7 +47,13 @@ app.use(errorHandler);
 const port = process.env.PORT || 3001;
 app.listen(port, () => {
   console.log(`Server running in ${config.environment} mode on port ${port}`);
-  console.log(`API documentation available at http://localhost:${port}/api-docs`);
+  
+  // Show appropriate documentation URL based on environment
+  if (config.environment === 'production') {
+    console.log(`API documentation available at https://api.docketcalendar.com/api-docs`);
+  } else {
+    console.log(`API documentation available at http://localhost:${port}/api-docs`);
+  }
 });
 
 // Handle unhandled promise rejections

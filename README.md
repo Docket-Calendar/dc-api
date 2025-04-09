@@ -141,7 +141,7 @@ docket-calendar-api/
 
 ## Environment Variables
 
-Create a `.env` file in the root directory with the following variables:
+Create a `.env` file in the root directory with the following variables (see `.env.example` for a template):
 
 ```
 # Server Configuration
@@ -149,11 +149,11 @@ PORT=3000
 NODE_ENV=development
 
 # Database Configuration
-DB_HOST=dcmain.mysql.database.azure.com
+DB_HOST=your_database_host
 DB_PORT=3306
-DB_USER=crg_admin
-DB_PASSWORD=F22Raptor123**
-DB_NAME=docket_calendar
+DB_USER=your_username
+DB_PASSWORD=your_password
+DB_NAME=your_database_name
 
 # Authentication
 JWT_SECRET=your-strong-jwt-secret-key-should-be-changed-in-production
@@ -162,6 +162,8 @@ JWT_EXPIRATION=1d
 # API Configuration
 API_PREFIX=/api/v1
 ```
+
+Note: Never commit your actual `.env` file to version control.
 
 ## API Endpoints
 
