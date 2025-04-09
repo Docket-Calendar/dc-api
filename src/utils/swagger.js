@@ -4,7 +4,9 @@ const { apiPrefix, environment } = require('../config/server');
 
 // Determine server URL based on environment
 const serverUrl = environment === 'production' 
-  ? 'https://api.docketcalendar.com/api/v1'
+  ? process.env.WEBSITE_HOSTNAME 
+    ? `https://${process.env.WEBSITE_HOSTNAME}${apiPrefix}` 
+    : 'https://docketcalendar-api-chejaeg9a4bggbfe.centralus-01.azurewebsites.net/api/v1'
   : apiPrefix;
 
 // Swagger definition
