@@ -1,8 +1,23 @@
+/**
+ * Authentication middleware
+ */
 const jwt = require('jsonwebtoken');
 const { jwt: jwtConfig } = require('../config/server');
 const { pool } = require('../config/database');
+const { verifyToken } = require('../utils/token');
 
-// Token validation middleware
+/**
+ * Maximum token age check (even if not expired by JWT standards)
+ * @type {number} Time in seconds (30 days)
+ */
+const MAX_TOKEN_AGE = 30 * 24 * 60 * 60; // 30 days in seconds
+
+/**
+ * Middleware to validate API token
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next function
+ */
 const validateToken = async (req, res, next) => {
   try {
     // Get the token from the request headers
@@ -16,43 +31,81 @@ const validateToken = async (req, res, next) => {
 
     const token = authHeader.split(' ')[1];
     
-    // Verify the token
-    const decoded = jwt.verify(token, jwtConfig.secret);
-    
-    // Check if token exists in the database
-    const [rows] = await pool.execute(
-      'SELECT id, username, firstname, lastname FROM users WHERE api_access_token = ?',
-      [token]
-    );
+    try {
+      // Verify the token
+      const decoded = verifyToken(token);
+      
+      // Additional security check - limit token absolute age
+      const currentTime = Math.floor(Date.now() / 1000);
+      if (decoded.iat && (currentTime - decoded.iat > MAX_TOKEN_AGE)) {
+        return res.status(401).json({
+          success: false,
+          error: 'Unauthorized - Token too old, please request a new one'
+        });
+      }
+      
+      // Check if token exists in the database
+      const [rows] = await pool.execute(
+        'SELECT id, username, firstname, lastname FROM users WHERE api_access_token = ?',
+        [token]
+      );
 
-    // If token is not found in the database
-    if (rows.length === 0) {
+      // If token is not found in the database
+      if (rows.length === 0) {
+        return res.status(401).json({ 
+          success: false, 
+          error: 'Unauthorized - Token not recognized' 
+        });
+      }
+
+      // Attach user data and token payload to the request
+      req.user = rows[0];
+      req.tokenData = decoded;
+      
+      // Add short response delay to prevent timing attacks (0-100ms random delay)
+      setTimeout(next, Math.floor(Math.random() * 100));
+    } catch (error) {
       return res.status(401).json({ 
         success: false, 
-        error: 'Unauthorized - Token not recognized' 
+        error: error.message || 'Unauthorized - Invalid token' 
       });
     }
-
-    // Attach user data and token payload to the request
-    req.user = rows[0];
-    req.tokenData = decoded;
-    next();
   } catch (error) {
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ 
-        success: false, 
-        error: 'Unauthorized - Token expired' 
-      });
-    }
-    
-    return res.status(401).json({ 
+    console.error('Authentication error:', error);
+    return res.status(500).json({ 
       success: false, 
-      error: 'Unauthorized - Invalid token' 
+      error: 'Internal server error during authentication' 
     });
   }
 };
 
+/**
+ * Role-based authorization middleware
+ * @param {string[]} roles - Array of allowed roles
+ * @returns {Function} Express middleware function
+ */
+const authorize = (roles = []) => {
+  return (req, res, next) => {
+    if (!req.user || !req.user.role) {
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden - Insufficient permissions'
+      });
+    }
+    
+    if (roles.length && !roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden - Insufficient permissions for this resource'
+      });
+    }
+    
+    next();
+  };
+};
+
 // Export middleware functions
 module.exports = {
-  validateToken
+  validateToken,
+  authorize
 }; 
