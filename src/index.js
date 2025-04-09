@@ -43,18 +43,20 @@ app.use(routes);
 app.use(notFound);
 app.use(errorHandler);
 
-// Start server
-const port = process.env.PORT || 3001;
-app.listen(port, () => {
-  console.log(`Server running in ${config.environment} mode on port ${port}`);
-  
-  // Show appropriate documentation URL based on environment
-  if (config.environment === 'production') {
-    console.log(`API documentation available at https://api.docketcalendar.com/api-docs`);
-  } else {
-    console.log(`API documentation available at http://localhost:${port}/api-docs`);
-  }
-});
+// Only start the server if this file is run directly (not imported in tests)
+if (require.main === module) {
+  const port = process.env.PORT || 3001;
+  app.listen(port, () => {
+    console.log(`Server running in ${config.environment} mode on port ${port}`);
+    
+    // Show appropriate documentation URL based on environment
+    if (config.environment === 'production') {
+      console.log(`API documentation available at https://api.docketcalendar.com/api-docs`);
+    } else {
+      console.log(`API documentation available at http://localhost:${port}/api-docs`);
+    }
+  });
+}
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
