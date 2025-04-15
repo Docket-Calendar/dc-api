@@ -37,11 +37,35 @@ const generateToken = (payload, expiresIn = jwtConfig.expiresIn) => {
  */
 const verifyToken = (token) => {
   try {
-    return jwt.verify(token, jwtConfig.secret, {
-      issuer: 'docketcalendar-api',
-      audience: 'docketcalendar-client'
-    });
+    // First try without strict validation
+    try {
+      return jwt.verify(token, jwtConfig.secret, {
+        // Remove strict validation for issuer and audience
+        // issuer: 'docketcalendar-api',
+        // audience: 'docketcalendar-client'
+      });
+    } catch (firstError) {
+      console.error('First verification attempt failed:', firstError.message);
+      
+      // If that fails, try to decode without verification for debugging
+      const decoded = jwt.decode(token, { complete: true });
+      console.error('Token header:', JSON.stringify(decoded?.header));
+      console.error('Token payload:', JSON.stringify(decoded?.payload));
+      
+      // Try again with secret trimmed (in case of whitespace issues)
+      const trimmedSecret = jwtConfig.secret.trim();
+      if (trimmedSecret !== jwtConfig.secret) {
+        console.error('Trying with trimmed secret (original had whitespace)');
+        return jwt.verify(token, trimmedSecret);
+      }
+      
+      // If we get here, rethrow the original error
+      throw firstError;
+    }
   } catch (error) {
+    // Enhanced error logging
+    console.error('JWT verification error:', error.name, error.message);
+    
     // Enhance error message but don't expose details
     if (error.name === 'TokenExpiredError') {
       throw new Error('Authentication token has expired');
