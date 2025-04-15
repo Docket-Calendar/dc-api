@@ -90,18 +90,9 @@ try {
 
   // Swagger documentation - only in non-production or with authentication
   try {
-    if (process.env.NODE_ENV !== 'production') {
-      swaggerSetup(app);
-      logger.info('Swagger documentation setup complete');
-    } else {
-      // In production, wrap Swagger with authentication
-      const { validateToken } = require('./middleware/auth.middleware');
-      app.use('/api-docs', validateToken, (req, res, next) => {
-        swaggerSetup(app);
-        next();
-      });
-      logger.info('Swagger documentation secured in production');
-    }
+    // Make Swagger docs public in all environments
+    swaggerSetup(app);
+    logger.info('Swagger documentation setup complete - publicly accessible');
   } catch (error) {
     logger.error('Error setting up Swagger:', error.message);
   }
@@ -134,9 +125,9 @@ try {
     const server = app.listen(port, () => {
       logger.info(`Server running in ${config.environment} mode on port ${port}`);
       
-      // Show appropriate documentation URL based on environment
+      // Show documentation URL (now public in all environments)
       if (config.environment === 'production') {
-        logger.info(`API documentation available at ${process.env.WEBSITE_HOSTNAME ? `https://${process.env.WEBSITE_HOSTNAME}` : 'https://api.docketcalendar.com'}/api-docs (requires authentication)`);
+        logger.info(`API documentation available at ${process.env.WEBSITE_HOSTNAME ? `https://${process.env.WEBSITE_HOSTNAME}` : 'https://api.docketcalendar.com'}/api-docs (public access)`);
       } else {
         logger.info(`API documentation available at http://localhost:${port}/api-docs`);
       }
