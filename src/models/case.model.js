@@ -80,7 +80,7 @@ class Case {
       }
 
       if (params.timezone) {
-        query += ' AND timezone = ?';
+        query += ' AND casetimezone = ?';
         queryParams.push(params.timezone);
       }
 
