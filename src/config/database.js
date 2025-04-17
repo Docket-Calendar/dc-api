@@ -4,9 +4,8 @@ require('dotenv').config();
 // Create pool with more fault tolerance in production
 const createConnectionPool = () => {
   try {
-    const sslConfig = process.env.NODE_ENV === 'production' 
-      ? { rejectUnauthorized: false } // Less strict in production
-      : { rejectUnauthorized: true };
+    // Always use SSL with rejectUnauthorized: false for Azure MySQL
+    const sslConfig = { rejectUnauthorized: false };
     
     console.log('Creating database connection pool with config:');
     console.log({
@@ -14,7 +13,8 @@ const createConnectionPool = () => {
       port: process.env.DB_PORT,
       user: process.env.DB_USER,
       database: process.env.DB_NAME,
-      environment: process.env.NODE_ENV
+      environment: process.env.NODE_ENV,
+      ssl: 'enabled'
     });
     
     return mysql.createPool({
