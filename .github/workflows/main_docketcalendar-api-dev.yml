@@ -22,13 +22,29 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
+          cache: 'npm'
 
-      - name: npm install, build, and test
+      - name: Print Node.js and npm information
         run: |
+          node --version
+          npm --version
+          
+      - name: Clean npm cache and install dependencies
+        run: |
+          npm cache clean --force
+          rm -rf node_modules package-lock.json
           npm install
-          npm run build --if-present
-          npm run test --if-present
+          npm list express
 
+      - name: Run build if present
+        run: npm run build --if-present
+        
+      - name: Run tests
+        run: npm run test
+        env:
+          NODE_ENV: test
+          JWT_SECRET: test-secret-for-ci
+          
       - name: Zip artifact for deployment
         run: zip release.zip ./* -r
 
