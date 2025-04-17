@@ -6,25 +6,33 @@ class Case {
     try {
       console.log('Attempting to fetch cases with pagination:', { page, limit });
       
-      const offset = (page - 1) * limit;
-      const [rows] = await pool.execute(
-        'SELECT * FROM docket_cases LIMIT ? OFFSET ?',
-        [limit, offset]
+      // Ensure values are numbers
+      const pageNum = Number(page);
+      const limitNum = Number(limit);
+      const offset = (pageNum - 1) * limitNum;
+      
+      // Use query directly with a string interpolated statement instead of parametrized query
+      // This is generally not recommended due to SQL injection risks, but limit/offset are numeric
+      // and we're ensuring they are numbers, so it should be safe in this specific case
+      console.log(`Using direct query with LIMIT ${limitNum} OFFSET ${offset}`);
+      
+      const [rows] = await pool.query(
+        `SELECT * FROM docket_cases LIMIT ${limitNum} OFFSET ${offset}`
       );
       
       console.log(`Successfully retrieved ${rows.length} cases`);
       
       // Get total count for pagination
-      const [countResult] = await pool.execute('SELECT COUNT(*) as total FROM docket_cases');
+      const [countResult] = await pool.query('SELECT COUNT(*) as total FROM docket_cases');
       const total = countResult[0].total;
       
       return {
         data: rows,
         pagination: {
           total,
-          page,
-          limit,
-          totalPages: Math.ceil(total / limit)
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(total / limitNum)
         }
       };
     } catch (error) {
@@ -43,9 +51,10 @@ class Case {
     try {
       console.log('Attempting to fetch case by ID:', id);
       
+      const caseId = Number(id);
       const [rows] = await pool.execute(
         'SELECT * FROM docket_cases WHERE case_id = ?',
-        [id]
+        [caseId]
       );
       
       console.log(`Case fetch result: ${rows.length ? 'Found' : 'Not found'}`);
@@ -71,38 +80,40 @@ class Case {
 
       if (params.jurisdiction) {
         query += ' AND case_jurisdiction = ?';
-        queryParams.push(params.jurisdiction);
+        queryParams.push(Number(params.jurisdiction));
       }
 
       if (params.assignee) {
         query += ' AND case_id IN (SELECT case_id FROM docket_cases_users WHERE user_id = ?)';
-        queryParams.push(params.assignee);
+        queryParams.push(Number(params.assignee));
       }
 
       if (params.timezone) {
         query += ' AND casetimezone = ?';
-        queryParams.push(params.timezone);
+        queryParams.push(Number(params.timezone));
       }
 
-      // Add pagination
+      // Add pagination - but don't use parameters for LIMIT/OFFSET
       const page = parseInt(params.page) || 1;
       const limit = parseInt(params.limit) || 10;
       const offset = (page - 1) * limit;
 
-      query += ' LIMIT ? OFFSET ?';
-      queryParams.push(limit, offset);
-
+      // Get total count for pagination before adding LIMIT
+      const countQuery = query.replace('SELECT *', 'SELECT COUNT(*) as total');
+      
+      // Execute the count query
+      const [countResult] = await pool.execute(countQuery, queryParams);
+      const total = countResult[0].total;
+      
+      // Add LIMIT and OFFSET directly to the query string
+      query += ` LIMIT ${limit} OFFSET ${offset}`;
+      
       console.log('Executing query:', query);
       console.log('Query parameters:', queryParams);
 
-      // Get total count for pagination
-      let countQuery = query.replace('SELECT *', 'SELECT COUNT(*) as total');
-      countQuery = countQuery.substring(0, countQuery.indexOf('LIMIT'));
-
+      // Execute the main query
       const [rows] = await pool.execute(query, queryParams);
-      const [countResult] = await pool.execute(countQuery, queryParams.slice(0, -2));
-      const total = countResult[0].total;
-
+      
       console.log(`Search returned ${rows.length} results out of ${total} total`);
 
       return {
