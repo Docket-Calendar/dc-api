@@ -7,11 +7,13 @@ const csrf = require('csurf');
 const winston = require('winston');
 require('dotenv').config();
 
-// Log environment info immediately on startup
-console.log('Application starting...');
-console.log('Node version:', process.version);
-console.log('Environment:', process.env.NODE_ENV);
-console.log('Port from env:', process.env.PORT);
+// Log environment info in development only
+if (process.env.NODE_ENV === 'development') {
+  console.log('Application starting...');
+  console.log('Node version:', process.version);
+  console.log('Environment:', process.env.NODE_ENV);
+  console.log('Port from env:', process.env.PORT);
+}
 
 // Create logger
 const logger = winston.createLogger({

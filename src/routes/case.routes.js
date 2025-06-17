@@ -1,110 +1,98 @@
 const express = require('express');
-const { getAllCases, getCaseById, searchCases } = require('../controllers/case.controller');
+const CaseController = require('../controllers/case.controller');
 const { validateToken } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
 /**
  * @swagger
- * /cases:
- *   get:
- *     summary: Get all cases with pagination
- *     tags: [Cases]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
+ * components:
+ *   schemas:
+ *     Case:
+ *       type: object
+ *       properties:
+ *         id:
  *           type: integer
- *           default: 1
- *         description: Page number
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: Number of items per page
- *     responses:
- *       200:
- *         description: A list of cases
- *       401:
- *         description: Unauthorized
+ *         case_name:
+ *           type: string
+ *         jurisdiction:
+ *           type: string
+ *         created_on:
+ *           type: string
+ *           format: date-time
+ *         timezone:
+ *           type: string
+ *         case_note:
+ *           type: string
+ *         initiation_date:
+ *           type: string
+ *           format: date
+ *         case_number:
+ *           type: string
+ *         custom_details:
+ *           type: object
+ *           properties:
+ *             title:
+ *               type: string
+ *             location:
+ *               type: string
+ *             description:
+ *               type: string
+ *         assignees:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: integer
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *         calendars:
+ *           type: array
+ *         dashboards:
+ *           type: array
  */
-router.get('/', validateToken, getAllCases);
 
 /**
  * @swagger
- * /cases/search:
+ * /api/v1/cases:
  *   get:
- *     summary: Search cases by various parameters
+ *     summary: Get all cases for authenticated user
  *     tags: [Cases]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: caseName
- *         schema:
- *           type: string
- *         description: Case name
- *       - in: query
- *         name: jurisdiction
- *         schema:
- *           type: string
- *         description: Jurisdiction
- *       - in: query
- *         name: assignee
- *         schema:
- *           type: string
- *         description: Case assignee
- *       - in: query
- *         name: timezone
- *         schema:
- *           type: string
- *         description: Timezone
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: Page number
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: Number of items per page
  *     responses:
  *       200:
- *         description: A list of cases matching the search criteria
+ *         description: List of user's cases retrieved successfully
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized - Invalid or missing token
  */
-router.get('/search', validateToken, searchCases);
+router.get('/', validateToken, CaseController.getAllCases);
 
 /**
  * @swagger
- * /cases/{id}:
+ * /api/v1/cases/{id}:
  *   get:
- *     summary: Get a specific case by ID
+ *     summary: Get case by ID for authenticated user
  *     tags: [Cases]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
- *         schema:
- *           type: string
  *         required: true
- *         description: Case ID
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
- *         description: Case details
- *       404:
- *         description: Case not found
+ *         description: Case retrieved successfully
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized - Invalid or missing token
+ *       404:
+ *         description: Case not found or not owned by user
  */
-router.get('/:id', validateToken, getCaseById);
+router.get('/:id', validateToken, CaseController.getCaseById);
 
 module.exports = router; 

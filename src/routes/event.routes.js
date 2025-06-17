@@ -1,162 +1,111 @@
 const express = require('express');
-const { getAllEvents, getEventById, getEventsByCaseId, searchEvents } = require('../controllers/event.controller');
+const EventController = require('../controllers/event.controller');
 const { validateToken } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
 /**
  * @swagger
- * /events:
- *   get:
- *     summary: Get all events with pagination
- *     tags: [Events]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
+ * components:
+ *   schemas:
+ *     Event:
+ *       type: object
+ *       properties:
+ *         id:
  *           type: integer
- *           default: 1
- *         description: Page number
- *       - in: query
- *         name: limit
- *         schema:
+ *         event_name:
+ *           type: string
+ *         date:
+ *           type: string
+ *           format: date
+ *         time:
+ *           type: string
+ *         appointment_length:
  *           type: integer
- *           default: 10
- *         description: Number of items per page
- *     responses:
- *       200:
- *         description: A list of events
- *       401:
- *         description: Unauthorized
+ *         trigger_name:
+ *           type: string
+ *         trigger_date:
+ *           type: string
+ *           format: date
+ *         trigger_time:
+ *           type: string
+ *         service_type:
+ *           type: string
+ *         jurisdiction:
+ *           type: string
+ *         created_on:
+ *           type: string
+ *           format: date-time
+ *         court_rule:
+ *           type: string
+ *         date_rule:
+ *           type: string
+ *         event_type:
+ *           type: string
+ *         custom_details:
+ *           type: object
+ *           properties:
+ *             title:
+ *               type: string
+ *             location:
+ *               type: string
+ *             description:
+ *               type: string
+ *         assignees:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: integer
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *         calendars:
+ *           type: array
+ *         dashboards:
+ *           type: array
  */
-router.get('/', validateToken, getAllEvents);
 
 /**
  * @swagger
- * /events/search:
+ * /api/v1/events:
  *   get:
- *     summary: Search events by various parameters
+ *     summary: Get all events for authenticated user
  *     tags: [Events]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: caseId
- *         schema:
- *           type: string
- *         description: Case ID
- *       - in: query
- *         name: eventName
- *         schema:
- *           type: string
- *         description: Event name
- *       - in: query
- *         name: eventType
- *         schema:
- *           type: string
- *         description: Event type
- *       - in: query
- *         name: jurisdiction
- *         schema:
- *           type: string
- *         description: Jurisdiction
- *       - in: query
- *         name: triggerName
- *         schema:
- *           type: string
- *         description: Trigger name
- *       - in: query
- *         name: fromDate
- *         schema:
- *           type: string
- *           format: date
- *         description: From date (ISO format)
- *       - in: query
- *         name: toDate
- *         schema:
- *           type: string
- *           format: date
- *         description: To date (ISO format)
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: Page number
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: Number of items per page
  *     responses:
  *       200:
- *         description: A list of events matching the search criteria
+ *         description: List of user's events retrieved successfully
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized - Invalid or missing token
  */
-router.get('/search', validateToken, searchEvents);
+router.get('/', validateToken, EventController.getAllEvents);
 
 /**
  * @swagger
- * /events/{id}:
+ * /api/v1/events/{id}:
  *   get:
- *     summary: Get a specific event by ID
+ *     summary: Get event by ID for authenticated user
  *     tags: [Events]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
- *         schema:
- *           type: string
  *         required: true
- *         description: Event ID
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
- *         description: Event details
+ *         description: Event retrieved successfully
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
  *       404:
- *         description: Event not found
- *       401:
- *         description: Unauthorized
+ *         description: Event not found or not owned by user
  */
-router.get('/:id', validateToken, getEventById);
-
-/**
- * @swagger
- * /events/case/{caseId}:
- *   get:
- *     summary: Get all events for a specific case
- *     tags: [Events]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: caseId
- *         schema:
- *           type: string
- *         required: true
- *         description: Case ID
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: Page number
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: Number of items per page
- *     responses:
- *       200:
- *         description: A list of events for the specified case
- *       401:
- *         description: Unauthorized
- */
-router.get('/case/:caseId', validateToken, getEventsByCaseId);
+router.get('/:id', validateToken, EventController.getEventById);
 
 module.exports = router; 

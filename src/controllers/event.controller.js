@@ -1,89 +1,71 @@
 const Event = require('../models/event.model');
 
-// Get all events with pagination
-const getAllEvents = async (req, res, next) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    
-    const result = await Event.findAll(page, limit);
-    
-    res.status(200).json({
-      success: true,
-      ...result
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+class EventController {
+  // Get all events for authenticated user
+  static async getAllEvents(req, res) {
+    try {
+      // Get the authenticated user's ID from the token
+      const userId = req.user.id;
+      const events = await Event.findAll(userId);
 
-// Get a specific event by ID
-const getEventById = async (req, res, next) => {
-  try {
-    const eventId = req.params.id;
-    const result = await Event.findById(eventId);
-    
-    if (!result) {
-      res.status(404);
-      throw new Error(`Event not found with id ${eventId}`);
+      res.json({
+        status: 'success',
+        message: 'Events retrieved successfully',
+        data: events,
+        count: events.length
+      });
+    } catch (error) {
+      // Only log detailed errors in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error in getAllEvents:', error.message);
+      }
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to retrieve events',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
     }
-    
-    res.status(200).json({
-      success: true,
-      data: result
-    });
-  } catch (error) {
-    next(error);
   }
-};
 
-// Get all events for a specific case
-const getEventsByCaseId = async (req, res, next) => {
-  try {
-    const caseId = req.params.caseId;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    
-    const result = await Event.findByCaseId(caseId, page, limit);
-    
-    res.status(200).json({
-      success: true,
-      ...result
-    });
-  } catch (error) {
-    next(error);
+  // Get a specific event by ID for authenticated user
+  static async getEventById(req, res) {
+    try {
+      const eventId = parseInt(req.params.id);
+      if (!eventId) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Valid event ID is required'
+        });
+      }
+
+      // Get the authenticated user's ID from the token
+      const userId = req.user.id;
+      const eventData = await Event.findById(eventId, userId);
+      
+      if (!eventData) {
+        return res.status(404).json({
+          status: 'error',
+          message: 'Event not found or you do not have access to this event'
+        });
+      }
+
+      res.json({
+        status: 'success',
+        message: 'Event retrieved successfully',
+        data: eventData
+      });
+    } catch (error) {
+      // Only log detailed errors in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error in getEventById:', error.message);
+      }
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to retrieve event',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
   }
-};
+}
 
-// Search events by various parameters
-const searchEvents = async (req, res, next) => {
-  try {
-    const searchParams = {
-      caseId: req.query.caseId,
-      eventName: req.query.eventName,
-      eventType: req.query.eventType,
-      jurisdiction: req.query.jurisdiction,
-      triggerName: req.query.triggerName,
-      fromDate: req.query.fromDate,
-      toDate: req.query.toDate,
-      page: parseInt(req.query.page) || 1,
-      limit: parseInt(req.query.limit) || 10
-    };
-    
-    const result = await Event.search(searchParams);
-    
-    res.status(200).json({
-      success: true,
-      ...result
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-module.exports = {
-  getAllEvents,
-  getEventById,
-  getEventsByCaseId,
-  searchEvents
-}; 
+module.exports = EventController; 

@@ -37,9 +37,6 @@ const generateToken = (payload, expiresIn = jwtConfig.expiresIn) => {
  */
 const verifyToken = (token) => {
   try {
-    // Log token verification attempt for debugging
-    console.log('Attempting to verify token - lenient mode without issuer/audience validation');
-    
     // Verify with basic validation, without strict issuer/audience checks
     return jwt.verify(token, jwtConfig.secret, {
       // Removed issuer and audience validation to fix compatibility issues
@@ -47,8 +44,10 @@ const verifyToken = (token) => {
       // audience: 'docketcalendar-client'
     });
   } catch (error) {
-    // Enhanced error logging
-    console.error('JWT verification error:', error.name, error.message);
+    // Enhanced error logging - only log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('JWT verification error:', error.name, error.message);
+    }
     
     // Enhance error message but don't expose details
     if (error.name === 'TokenExpiredError') {

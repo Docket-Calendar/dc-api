@@ -10,9 +10,12 @@ node_modules/
 !.env.production.example
 
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
 
 # Dependencies
 package-lock.json
@@ -24,7 +27,7 @@ pids
 *.pid.lock
 
 # Coverage directory
-coverage
+coverage/
 
 # IDE files
 .idea/
@@ -34,4 +37,19 @@ coverage
 
 # OS files
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# Webapp logs (Azure)
+webapp_logs/
+webapp_logs.zip
+
+# Testing
+coverage/
+
+# Production
+dist/
+build/
+
+# Dependency directories
+jspm_packages/
+bower_components/ 
