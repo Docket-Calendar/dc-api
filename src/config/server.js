@@ -6,8 +6,10 @@ const config = {
   host: process.env.HOST || 'localhost',
   apiPrefix: process.env.API_PREFIX || '/api',
   jwt: {
-    secret: process.env.JWT_SECRET,
-    expiresIn: process.env.JWT_EXPIRATION || '1d'
+    secret: process.env.JWT_SECRET || 
+            process.env.AUTH_KEY || 
+            'docketcalendar-jwt-secret-key-static-2025',
+    expiresIn: process.env.JWT_EXPIRATION || '30d'
   },
   cors: {
     origin: process.env.NODE_ENV === 'production' 

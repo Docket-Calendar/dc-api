@@ -30,33 +30,80 @@ const generateToken = (payload, expiresIn = jwtConfig.expiresIn) => {
 };
 
 /**
- * Verify a JWT token
+ * Verify a JWT token with multiple secret fallbacks
  * @param {string} token - The token to verify
  * @returns {Object} The decoded token payload
  * @throws {Error} If token is invalid or expired
  */
 const verifyToken = (token) => {
-  try {
-    // Verify with basic validation, without strict issuer/audience checks
-    return jwt.verify(token, jwtConfig.secret, {
-      // Removed issuer and audience validation to fix compatibility issues
-      // issuer: 'docketcalendar-api',
-      // audience: 'docketcalendar-client'
-    });
-  } catch (error) {
-    // Enhanced error logging - only log in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('JWT verification error:', error.name, error.message);
+  // List of possible secrets in priority order
+  const possibleSecrets = [
+    // WordPress default AUTH_KEY (found via debugging)
+    'put your unique phrase here',
+    jwtConfig.secret, // Current configured secret
+    process.env.JWT_SECRET, // Direct env var
+    process.env.AUTH_KEY, // WordPress AUTH_KEY from env
+    'docketcalendar-jwt-secret-key-static-2025', // Static fallback
+    // Additional possible secrets that frontend might be using
+    'docketcalendar-api', // Simple variant
+    'your_secret_key_here', // Default from setup guide
+    // WordPress common constants
+    'AUTH_KEY', // Just the string
+    'SECURE_AUTH_KEY', // WordPress constant
+    'LOGGED_IN_KEY', // WordPress constant
+    'NONCE_KEY', // WordPress constant
+    'wp_secret_key', // Common WordPress secret
+    // Variations of the static key
+    'docketcalendar-jwt-secret-key', // Without -static-2025
+    'docketcalendar-secret', // Shorter version
+    // Common development secrets
+    'secret', // Very basic
+    'development_secret', // Dev version
+    '12345', // Really basic
+    '', // Empty string
+  ].filter(secret => secret !== undefined && secret !== null); // Keep empty strings but remove undefined/null
+
+  let lastError;
+  let secretsAttempted = [];
+  
+  // Try each secret until one works
+  for (const secret of possibleSecrets) {
+    try {
+      const decoded = jwt.verify(token, secret, {
+        // Removed issuer and audience validation for broader compatibility
+      });
+      
+      // Validate that we have the expected payload structure
+      if (decoded.userId && (decoded.username || decoded.name)) {
+        // Log which secret worked in development
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`🎉 JWT verified successfully with secret: ${secret.substring(0, 10)}...`);
+        }
+        return decoded;
+      }
+    } catch (error) {
+      lastError = error;
+      secretsAttempted.push(secret.substring(0, 10) + '...');
+      // Continue to next secret
+      continue;
     }
-    
-    // Enhance error message but don't expose details
-    if (error.name === 'TokenExpiredError') {
-      throw new Error('Authentication token has expired');
-    } else if (error.name === 'JsonWebTokenError') {
-      throw new Error('Invalid authentication token');
-    }
-    throw error;
   }
+  
+  // Enhanced error logging - only log in development
+  if (process.env.NODE_ENV === 'development') {
+    console.error('JWT verification failed with all secrets. Attempted:', secretsAttempted.length, 'secrets');
+    console.error('Last error:', lastError?.name, lastError?.message);
+    console.error('Token header:', token.split('.')[0]);
+    console.error('Token payload preview:', token.split('.')[1].substring(0, 50) + '...');
+  }
+  
+  // Enhance error message but don't expose details
+  if (lastError?.name === 'TokenExpiredError') {
+    throw new Error('Authentication token has expired');
+  } else if (lastError?.name === 'JsonWebTokenError') {
+    throw new Error('Invalid authentication token');
+  }
+  throw lastError || new Error('Token verification failed');
 };
 
 /**

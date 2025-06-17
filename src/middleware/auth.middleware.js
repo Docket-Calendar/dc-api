@@ -32,7 +32,7 @@ const validateToken = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
     
     try {
-      // Verify the token
+      // Verify the token signature first
       const decoded = verifyToken(token);
       
       // Additional security check - limit token absolute age
@@ -44,9 +44,51 @@ const validateToken = async (req, res, next) => {
         });
       }
       
-      // TEMPORARY SOLUTION: Skip database check and trust valid JWT tokens
-      // In the future, update DB_HOST, DB_USER, etc. to point to the WordPress database
-      // or implement token synchronization between databases
+      // CRITICAL SECURITY: Check if token exists in database and hasn't been revoked
+      if (!decoded.userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Unauthorized - Invalid token payload'
+        });
+      }
+
+      try {
+        // Query database to verify token is still valid
+        const query = 'SELECT api_access_token FROM users WHERE id = ?';
+        const [rows] = await pool.execute(query, [decoded.userId]);
+        
+        if (!rows || rows.length === 0) {
+          return res.status(401).json({
+            success: false,
+            error: 'Unauthorized - User not found'
+          });
+        }
+        
+        const dbToken = rows[0].api_access_token;
+        
+        // Check if token has been revoked (empty) or doesn't match
+        if (!dbToken || dbToken.trim() === '' || dbToken !== token) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`🔒 Token revoked or invalid for user ${decoded.userId}`);
+          }
+          return res.status(401).json({
+            success: false,
+            error: 'Unauthorized - Token has been revoked or is invalid'
+          });
+        }
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`✅ Token validated against database for user ${decoded.userId}`);
+        }
+        
+      } catch (dbError) {
+        console.error('Database token validation error:', dbError);
+        // In case of database error, reject the token for security
+        return res.status(401).json({
+          success: false,
+          error: 'Unauthorized - Unable to validate token'
+        });
+      }
       
       // Create user object from token payload
       req.user = {
