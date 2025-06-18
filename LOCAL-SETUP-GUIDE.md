@@ -1,43 +1,44 @@
 # Local Setup Guide - Updated DocketCalendar API
 
 ## 🚨 **IMPORTANT: Current Status**
-- ✅ **API Code**: Updated and ready
-- ❌ **Database**: NOT updated yet (you need to run the migration)
-- ❌ **Will NOT work** until database is updated
+- ✅ **API Code**: Ready to connect to existing database
+- ✅ **Database**: Works with your existing database (no migration needed)
+- ✅ **Ready to use** with proper configuration
 
 ## 📋 **Prerequisites**
 - Node.js (v20+)
 - MySQL (v8.0+)
-- Your existing database connection details
+- Access to your existing database with legacy tables
 
-## 🗄️ **Step 1: Update Your Database**
+## 🗄️ **Step 1: Database Configuration**
 
-### **Option A: Fresh Database (Recommended for Testing)**
-```sql
--- Connect to MySQL and create a fresh test database
-DROP DATABASE IF EXISTS docket_calendar_test;
-CREATE DATABASE docket_calendar_test;
-USE docket_calendar_test;
-
--- Then run the entire database-new-schema.sql file
+### **Use Your Existing Database**
+```bash
+# No database changes needed! 
+# The API works with your existing tables like:
+# - import_docket_calculator
+# - docket_cases
+# - docket_cases_attendees
+# - import_events
+# etc.
 ```
 
-### **Option B: Update Existing Database (Backup First!)**
+### **Optional: Apply Performance Indexes**
 ```sql
--- BACKUP YOUR EXISTING DATABASE FIRST!
-mysqldump -u your_username -p docket_calendar > backup_$(date +%Y%m%d).sql
+-- OPTIONAL: Backup your existing database first
+mysqldump -u your_username -p your_database_name > backup_$(date +%Y%m%d).sql
 
--- Then run database-new-schema.sql
-mysql -u your_username -p docket_calendar < database-new-schema.sql
+-- Apply performance indexes to improve query speed
+mysql -u your_username -p your_database_name < database-performance-indexes.sql
 ```
 
-### **Quick Database Setup Commands**
+### **Quick Performance Setup Commands**
 ```bash
 # Navigate to your project directory
 cd /Users/allanfox/Documents/GitHub/dc-api
 
-# Run the schema (replace with your MySQL credentials)
-mysql -u your_username -p your_database_name < database-new-schema.sql
+# Apply performance indexes (optional but recommended)
+mysql -u your_username -p your_database_name < database-performance-indexes.sql
 ```
 
 ## ⚙️ **Step 2: Environment Setup**
@@ -114,43 +115,35 @@ curl http://localhost:3001/api/v1/dashboards
 ### **Check Database Tables**
 ```sql
 -- Connect to your database and verify tables exist
-USE docket_calendar; -- or your database name
+USE your_database_name; -- your actual database name
 
--- Should show 16 tables
+-- Show existing tables
 SHOW TABLES;
 
--- Check if sample data was inserted
-SELECT COUNT(*) FROM cases;
-SELECT COUNT(*) FROM triggers;
-SELECT COUNT(*) FROM events;
-SELECT COUNT(*) FROM calendars;
-SELECT COUNT(*) FROM dashboards;
+-- Check if your data is accessible
+SELECT COUNT(*) FROM docket_cases;
+SELECT COUNT(*) FROM import_docket_calculator;
+SELECT COUNT(*) FROM import_events;
+SELECT COUNT(*) FROM docket_cases_attendees;
 ```
 
-### **Expected Tables**
-You should see these 16 tables:
+### **Expected Legacy Tables**
+You should see tables like these (among others):
 ```
-calendars
-case_assignees
-case_calendars
-case_dashboards
-cases
-custom_details
-dashboards
-event_assignees
-event_calendars
-event_dashboards
+import_docket_calculator
+docket_cases
+docket_cases_attendees
+import_events
+docket_customtext
+owners
+usercontactupdate
+case_events
 events
-trigger_assignees
-trigger_calendars
-trigger_dashboards
-triggers
-users
 ```
 
-## 🧪 **Step 6: Test with Sample Data**
+## 🧪 **Step 6: Test with Real Data**
 
-The schema includes sample data. Test these endpoints:
+The API works with your existing data. Test these endpoints:
 
 ### **Cases (Enhanced)**
 ```bash
@@ -245,48 +238,35 @@ Database connection established successfully
 - **40+ endpoints** total
 - **Interactive testing** for all endpoints
 
-### **Sample Data Response:**
+### **Example API Response:**
 ```json
 {
-  "success": true,
+  "status": "success",
   "message": "Cases retrieved successfully",
   "data": [
     {
-      "id": 1,
-      "case_name": "Smith v. Jones",
-      "case_note": "Personal injury case - car accident",
-      "initiation_date": "2023-01-15",
-      "jurisdiction": "New York",
-      "custom_details": {
-        "title": "Motor Vehicle Accident Case",
-        "location": "123 Main St, New York, NY"
-      },
+      "id": 123,
+      "case_name": "Your Actual Case Name",
+      "jurisdiction": "Your Jurisdiction",
       "assignees": [
-        {"id": 2, "name": "John Doe", "role": "primary"}
+        {"assignee": "user@lawfirm.com", "assignee_name": "Actual User"}
       ],
-      "calendars": [
-        {"id": 1, "name": "Court Calendar"}
-      ]
+      "created_at": "2024-01-15T10:30:00.000Z"
     }
   ],
-  "pagination": {
-    "total": 3,
-    "page": 1,
-    "limit": 10,
-    "totalPages": 1
-  }
+  "count": 5
 }
 ```
 
 ## ✅ **Success Checklist**
 
-- [ ] Database updated with new schema
+- [ ] API connects to existing database successfully
 - [ ] API starts without errors  
 - [ ] Swagger docs accessible at `/api-docs`
-- [ ] Sample data visible in responses
-- [ ] New endpoints working (`/triggers`, `/calendars`, `/dashboards`)
-- [ ] Enhanced fields visible in existing endpoints
-- [ ] Custom details system working
-- [ ] Relationships properly loaded
+- [ ] Real data visible in API responses
+- [ ] Endpoints working (`/cases`, `/triggers`, `/events`)
+- [ ] Performance indexes applied (optional but recommended)
+- [ ] Legacy data properly mapped to clean API responses
+- [ ] Authentication working properly
 
-Once all these are checked, your enhanced DocketCalendar API is ready to use! 🎉 
+Once all these are checked, your DocketCalendar API is ready to use with your existing data! 🎉 

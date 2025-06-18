@@ -155,8 +155,8 @@ POST /api/events
 
 1. Clone the repository
 2. Install dependencies: `npm install`
-3. Set up the database using `database-new-schema.sql`
-4. Configure environment variables
+3. Configure environment variables for your existing database
+4. Optional: Apply performance indexes using `database-performance-indexes.sql`
 5. Start the server: `npm start`
 
 ## Database Schema
