@@ -1,6 +1,20 @@
 -- DocketCalendar API - Simplified Database Schema
 -- Focused on Cases, Triggers, and Events with exact fields specified
 
+-- COLOR MAPPING (Integer Color IDs):
+-- 0  = No Color
+-- 1  = Lavender  
+-- 2  = Light Green
+-- 3  = Purple
+-- 4  = Pink
+-- 5  = Yellow
+-- 6  = Orange
+-- 7  = Blue
+-- 8  = Grey
+-- 9  = Indigo
+-- 10 = Green
+-- 11 = Red
+
 CREATE DATABASE IF NOT EXISTS docket_calendar;
 USE docket_calendar;
 
@@ -27,6 +41,8 @@ CREATE TABLE IF NOT EXISTS cases (
   case_note TEXT, -- Case Note
   initiation_date DATE, -- Initiation Date
   case_number VARCHAR(100), -- Case Number
+  color INT(2) DEFAULT 0, -- Case Color (integer color ID: 0-11)
+  category VARCHAR(255), -- Case Category
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Created On
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -40,6 +56,8 @@ CREATE TABLE IF NOT EXISTS triggers (
   trigger_time TIME NOT NULL, -- Time
   service_type ENUM('email', 'sms', 'push', 'personal') DEFAULT 'email', -- Service Type
   jurisdiction VARCHAR(100), -- Jurisdiction
+  color INT(2) DEFAULT 0, -- Trigger Color (integer color ID: 0-11)
+  category VARCHAR(255), -- Trigger Category
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Created On
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -59,6 +77,8 @@ CREATE TABLE IF NOT EXISTS events (
   court_rule VARCHAR(255), -- Court Rule
   date_rule VARCHAR(255), -- Date Rule
   event_type VARCHAR(100), -- Event type
+  color INT(2) DEFAULT 0, -- Event Color (integer color ID: 0-11)
+  category VARCHAR(255), -- Event Category
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Created On
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -257,23 +277,23 @@ INSERT INTO dashboards (name, description, is_default, created_by) VALUES
 ('Deadlines Dashboard', 'Focus on upcoming deadlines', FALSE, 1);
 
 -- Insert sample cases
-INSERT INTO cases (case_name, jurisdiction, timezone, case_note, initiation_date, case_number) VALUES
-('Smith v. Jones', 'New York', 'America/New_York', 'Personal injury case - car accident', '2023-01-15', 'NY-2023-001'),
-('Johnson v. Acme Corp', 'California', 'America/Los_Angeles', 'Employment discrimination case', '2023-02-20', 'CA-2023-002'),
-('Williams v. Brown', 'Texas', 'America/Chicago', 'Contract dispute case', '2023-03-10', 'TX-2023-003');
+INSERT INTO cases (case_name, jurisdiction, timezone, case_note, initiation_date, case_number, color, category) VALUES
+('Smith v. Jones', 'New York', 'America/New_York', 'Personal injury case - car accident', '2023-01-15', 'NY-2023-001', 11, 'Personal Injury'),
+('Johnson v. Acme Corp', 'California', 'America/Los_Angeles', 'Employment discrimination case', '2023-02-20', 'CA-2023-002', 7, 'Employment Law'),
+('Williams v. Brown', 'Texas', 'America/Chicago', 'Contract dispute case', '2023-03-10', 'TX-2023-003', 6, 'Contract Dispute');
 
 -- Insert sample triggers
-INSERT INTO triggers (name, trigger_date, trigger_time, service_type, jurisdiction) VALUES
-('30-Day Filing Deadline', '2023-07-15', '09:00:00', 'email', 'New York'),
-('Discovery Deadline Reminder', '2023-08-01', '10:00:00', 'email', 'California'),
-('Settlement Conference Notice', '2023-09-15', '14:00:00', 'personal', 'Texas');
+INSERT INTO triggers (name, trigger_date, trigger_time, service_type, jurisdiction, color, category) VALUES
+('30-Day Filing Deadline', '2023-07-15', '09:00:00', 'email', 'New York', 11, 'Filing Deadline'),
+('Discovery Deadline Reminder', '2023-08-01', '10:00:00', 'email', 'California', 10, 'Discovery'),
+('Settlement Conference Notice', '2023-09-15', '14:00:00', 'personal', 'Texas', 7, 'Settlement');
 
 -- Insert sample events
-INSERT INTO events (case_id, trigger_id, event_name, event_date, event_time, appointment_length, service_type, jurisdiction, court_rule, date_rule, event_type) VALUES
-(1, 1, 'Response Filing Due', '2023-08-15', '17:00:00', 30, 'email', 'New York', 'CPLR 3012', '30 days from service', 'Deadline'),
-(1, NULL, 'Initial Case Conference', '2023-09-01', '10:00:00', 60, 'personal', 'New York', 'CPLR 3401', 'Within 45 days', 'Hearing'),
-(2, 2, 'Discovery Deadline', '2023-09-01', '23:59:00', 0, 'email', 'California', 'CCP 2024', '120 days from answer', 'Deadline'),
-(3, 3, 'Settlement Conference', '2023-10-15', '14:00:00', 120, 'personal', 'Texas', 'TRCP 166', 'Court discretion', 'Conference');
+INSERT INTO events (case_id, trigger_id, event_name, event_date, event_time, appointment_length, service_type, jurisdiction, court_rule, date_rule, event_type, color, category) VALUES
+(1, 1, 'Response Filing Due', '2023-08-15', '17:00:00', 30, 'email', 'New York', 'CPLR 3012', '30 days from service', 'Deadline', 11, 'Filing Deadline'),
+(1, NULL, 'Initial Case Conference', '2023-09-01', '10:00:00', 60, 'personal', 'New York', 'CPLR 3401', 'Within 45 days', 'Hearing', 7, 'Court Hearing'),
+(2, 2, 'Discovery Deadline', '2023-09-01', '23:59:00', 0, 'email', 'California', 'CCP 2024', '120 days from answer', 'Deadline', 5, 'Discovery Deadline'),
+(3, 3, 'Settlement Conference', '2023-10-15', '14:00:00', 120, 'personal', 'Texas', 'TRCP 166', 'Court discretion', 'Conference', 10, 'Settlement Conference');
 
 -- Insert sample custom details
 INSERT INTO custom_details (entity_type, entity_id, field_name, field_value) VALUES
